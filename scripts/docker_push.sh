@@ -51,6 +51,12 @@ push_image() {
 
 COMPONENTS=$@
 
+if [ -z "$COMPONENTS" ]; then
+    echo "Usage:"
+    echo "    TAG=dev REGISTRY=registry.cn-beijing.aliyuncs.com/yunionio $0 <component1> <omponent2> ..."
+    exit 1
+fi
+
 cd $SRC_DIR
 for compent in $COMPONENTS; do
     build_bin $compent

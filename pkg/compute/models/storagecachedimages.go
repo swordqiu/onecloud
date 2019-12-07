@@ -152,7 +152,7 @@ func (self *SStoragecachedimage) GetHost() (*SHost, error) {
 func (self *SStoragecachedimage) GetCustomizeColumns(ctx context.Context, userCred mcclient.TokenCredential, query jsonutils.JSONObject) *jsonutils.JSONDict {
 	extra := self.SJointResourceBase.GetCustomizeColumns(ctx, userCred, query)
 	extra = db.JointModelExtra(self, extra)
-	return self.getExtraDetails(extra)
+	return self.getExtraDetails(ctx, extra)
 }
 
 func (self *SStoragecachedimage) GetExtraDetails(ctx context.Context, userCred mcclient.TokenCredential, query jsonutils.JSONObject) (*jsonutils.JSONDict, error) {
@@ -161,7 +161,7 @@ func (self *SStoragecachedimage) GetExtraDetails(ctx context.Context, userCred m
 		return nil, err
 	}
 	extra = db.JointModelExtra(self, extra)
-	return self.getExtraDetails(extra), nil
+	return self.getExtraDetails(ctx, extra), nil
 }
 
 func (manager *SStoragecachedimageManager) AllowListDescendent(ctx context.Context, userCred mcclient.TokenCredential, model db.IStandaloneModel, query jsonutils.JSONObject) bool {
@@ -184,7 +184,7 @@ func (self *SStoragecachedimage) GetStoragecache() *SStoragecache {
 	return nil
 }
 
-func (self *SStoragecachedimage) getExtraDetails(extra *jsonutils.JSONDict) *jsonutils.JSONDict {
+func (self *SStoragecachedimage) getExtraDetails(ctx context.Context, extra *jsonutils.JSONDict) *jsonutils.JSONDict {
 	storagecache := self.GetStoragecache()
 	if storagecache != nil {
 		extra.Add(jsonutils.NewStringArray(storagecache.getStorageNames()), "storages")
@@ -196,6 +196,11 @@ func (self *SStoragecachedimage) getExtraDetails(extra *jsonutils.JSONDict) *jso
 	}
 	cnt, _ := self.getReferenceCount()
 	extra.Add(jsonutils.NewInt(int64(cnt)), "reference")
+	host, _ := self.GetHost()
+	if host != nil {
+		desc := host.GetShortDesc(ctx)
+		extra.Add(desc, "host")
+	}
 	return extra
 }
 
