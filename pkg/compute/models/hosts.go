@@ -846,6 +846,7 @@ func (self *SHost) PerformUpdateStorage(
 		}
 		bmStorage.SetModelManager(HoststorageManager, &bmStorage)
 		db.OpsLog.LogAttachEvent(ctx, self, &storage, userCred, bmStorage.GetShortDesc(ctx))
+		bmStorage.syncLocalStorageShare(ctx, userCred)
 		return nil, nil
 	}
 	storage := bs.GetStorage()
@@ -860,6 +861,7 @@ func (self *SHost) PerformUpdateStorage(
 		return nil, fmt.Errorf("Update baremetal storage error: %v", err)
 	}
 	db.OpsLog.LogEvent(storage, db.ACT_UPDATE, diff, userCred)
+	bs.syncLocalStorageShare(ctx, userCred)
 	//}
 	return nil, nil
 }
