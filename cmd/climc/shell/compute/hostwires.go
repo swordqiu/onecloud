@@ -75,6 +75,8 @@ func init() {
 		Interface string `help:"Interface"`
 		Bridge    string `help:"Bridge"`
 		IsMaster  string `help:"Master interface" choices:"true|false"`
+		VlanMode  string `help:"Vlan Mode" choices:"trunk|access|ovstrunk"`
+		VlanId    int    `help:"vlan Id"`
 	}
 	R(&HostWireUpdateOptions{}, "host-wire-update", "Update host wire information", func(s *mcclient.ClientSession, args *HostWireUpdateOptions) error {
 		params := jsonutils.NewDict()
@@ -93,6 +95,12 @@ func init() {
 			} else {
 				params.Add(jsonutils.JSONFalse, "is_master")
 			}
+		}
+		if len(args.VlanMode) > 0 {
+			params.Add(jsonutils.NewString(args.VlanMode), "vlan_mode")
+		}
+		if args.VlanId > 0 && args.VlanId < 4096 {
+			params.Add(jsonutils.NewInt(int64(args.VlanId)), "vlan_id")
 		}
 		result, err := modules.Hostwires.Update(s, args.HOST, args.WIRE, nil, params)
 		if err != nil {

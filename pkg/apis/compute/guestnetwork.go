@@ -39,6 +39,8 @@ type GuestnetworkShortDesc struct {
 	Mac string `json:"mac"`
 	// Bonding的配对网卡MAC
 	TeamWith string `json:"team_with"`
+	// Bonding Mode
+	TeamMode string `json:"team_mode"`
 	// 所属Vpc
 	VpcId string `json:"vpc_id"`
 	// 所属Network
@@ -61,6 +63,8 @@ type GuestnetworkListInput struct {
 	Ifname []string `json:"ifname"`
 
 	TeamWith []string `json:"team_with"`
+
+	TeamMode []string `json:"team_mode"`
 }
 
 type GuestnetworkUpdateInput struct {
@@ -93,6 +97,7 @@ type GuestnetworkJsonDesc struct {
 	VirtualIps []string             `json:"virtual_ips"`
 	ExternalId string               `json:"external_id"`
 	TeamWith   string               `json:"team_with"`
+	TeamMode   string               `json:"team_mode"`
 	Manual     *bool                `json:"manual"`
 
 	Vpc struct {

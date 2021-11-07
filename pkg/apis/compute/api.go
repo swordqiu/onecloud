@@ -70,8 +70,9 @@ type NetworkConfig struct {
 
 	RequireDesignatedIP bool `json:"require_designated_ip"`
 
-	RequireTeaming bool `json:"require_teaming"`
-	TryTeaming     bool `json:"try_teaming"`
+	RequireTeaming bool   `json:"require_teaming"`
+	TryTeaming     bool   `json:"try_teaming"`
+	TeamingMode    string `json:"teaming_mode"`
 
 	StandbyPortCount int `json:"standby_port_count"`
 	StandbyAddrCount int `json:"standby_addr_count"`

@@ -95,7 +95,9 @@ type SGuestnetwork struct {
 	Ifname string `width:"16" charset:"ascii" nullable:"true" list:"user" update:"user"`
 
 	// bind配对网卡MAC地址
-	TeamWith string `width:"32" charset:"ascii" nullable:"false" list:"user"`
+	TeamWith string `width:"32" charset:"ascii" nullable:"false" list:"user" default:""`
+	// bind mode
+	TeamMode string `width:"8" charset:"ascii" nullable:"false" list:"user" default:""`
 
 	// IPv4映射地址，当子网属于私有云vpc的时候分配，用于访问外网
 	MappedIpAddr string `width:"16" charset:"ascii" nullable:"true" list:"user"`
@@ -247,6 +249,7 @@ type newGuestNetworkArgs struct {
 	bwLimit     int
 	nicDriver   string
 	teamWithMac string
+	teamMode    string
 
 	virtual bool
 }
@@ -274,6 +277,7 @@ func (manager *SGuestnetworkManager) newGuestNetwork(
 		reUseAddr            = args.useDesignatedIP
 		ifname               = args.ifname
 		teamWithMac          = args.teamWithMac
+		teamMode             = args.teamMode
 	)
 
 	gn.GuestId = guest.Id
@@ -348,6 +352,7 @@ func (manager *SGuestnetworkManager) newGuestNetwork(
 	}
 	gn.Ifname = ifname
 	gn.TeamWith = teamWithMac
+	gn.TeamMode = teamMode
 	err = manager.TableSpec().Insert(ctx, &gn)
 	if err != nil {
 		return nil, err
@@ -580,6 +585,7 @@ func (self *SGuestnetwork) getJsonDesc() *api.GuestnetworkJsonDesc {
 	desc.VirtualIps = self.GetVirtualIPs()
 	desc.ExternalId = net.ExternalId
 	desc.TeamWith = self.TeamWith
+	desc.TeamMode = self.TeamMode
 
 	guest := self.getGuest()
 	if guest.GetHypervisor() != api.HYPERVISOR_KVM {
@@ -948,6 +954,7 @@ func (self *SGuestnetwork) GetShortDesc(ctx context.Context) *jsonutils.JSONDict
 	desc.Mac = self.MacAddr
 	if len(self.TeamWith) > 0 {
 		desc.TeamWith = self.TeamWith
+		desc.TeamMode = self.TeamMode
 	}
 	return jsonutils.Marshal(desc).(*jsonutils.JSONDict)
 }
@@ -1009,6 +1016,9 @@ func (manager *SGuestnetworkManager) ListItemFilter(
 	}
 	if len(query.TeamWith) > 0 {
 		q = q.In("team_with", query.TeamWith)
+	}
+	if len(query.TeamMode) > 0 {
+		q = q.In("team_mode", query.TeamMode)
 	}
 
 	return q, nil

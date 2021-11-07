@@ -5317,6 +5317,7 @@ func (self *SGuest) ToNetworksConfig() []*api.NetworkConfig {
 		netConf.Driver = guestNetwork.Driver
 		netConf.BwLimit = guestNetwork.BwLimit
 		netConf.RequireTeaming = requireTeaming
+		netConf.TeamingMode = guestNetwork.TeamMode
 		// netConf.NetType
 		ret = append(ret, netConf)
 	}

@@ -67,6 +67,11 @@ type SHostwire struct {
 	HostId string `width:"128" charset:"ascii" nullable:"false" list:"domain" create:"domain_required"`
 	// 二层网络Id
 	WireId string `width:"128" charset:"ascii" nullable:"false" list:"domain" create:"domain_required"`
+
+	// vlan mode
+	VlanMode string `width:"16" charset:"ascii" nullable:"false" list:"domain" create:"domain_optional" default:"ovstrunk"`
+	// default vlan id
+	VlanId int `nullable:"false" default:"1" list:"domain" update:"domain" create:"domain_optional"`
 }
 
 func (manager *SHostwireManager) GetMasterFieldName() string {

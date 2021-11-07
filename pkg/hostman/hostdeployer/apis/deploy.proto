@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package apis;
 
+option go_package = "yunion.io/x/onecloud/pkg/hostman/hostdeployer/apis";
+
 message GuestDesc {
   string name = 1;
   string uuid = 2;
@@ -61,6 +63,7 @@ message Nic {
   bool link_up = 24;
   int64 mtu = 25;
   string name = 26;
+  string team_mode = 27;
 }
 
 message VDDKConInfo {

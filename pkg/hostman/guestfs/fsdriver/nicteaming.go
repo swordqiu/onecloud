@@ -71,6 +71,7 @@ func ToServerNics(nics []*deployapi.Nic) []*types.SServerNic {
 			LinkUp:    nics[i].LinkUp,
 			Mtu:       int(nics[i].Mtu),
 			TeamWith:  nics[i].TeamWith,
+			TeamMode:  nics[i].TeamMode,
 		}
 	}
 	return ret

@@ -73,6 +73,7 @@ type SServerNic struct {
 	NicType   string   `json:"nic_type,omitempty"`
 	LinkUp    bool     `json:"link_up,omitempty"`
 	TeamWith  string   `json:"team_with,omitempty"`
+	TeamMode  string   `json:"team_mode,omitempty"`
 
 	TeamingMaster *SServerNic   `json:"-"`
 	TeamingSlaves []*SServerNic `json:"-"`
