@@ -304,9 +304,10 @@ func validateOIDCToken(ctx context.Context, req *http.Request) (oidcutils.SOIDCA
 		return tokenResp, errors.Wrap(err, "fetchOIDCCredential")
 	}
 	if oidcSecret.RedirectUri != authReq.RedirectUri {
-		return tokenResp, errors.Wrap(httperrors.ErrInvalidCredential, "redirect uri not match")
+		return tokenResp, errors.Wrapf(httperrors.ErrInvalidCredential, "redirect uri not match: db:%s(%d)!=request:%s(%d)", oidcSecret.RedirectUri, len(oidcSecret.RedirectUri), authReq.RedirectUri, len(authReq.RedirectUri))
 	}
 	if oidcSecret.Secret != clientSecret {
+		log.Debugf("secret in DB: %s(%d) secret decoded: %s(%d)", oidcSecret.Secret, len(oidcSecret.Secret), clientSecret, len(clientSecret))
 		return tokenResp, errors.Wrap(httperrors.ErrInvalidCredential, "client secret not match")
 	}
 
