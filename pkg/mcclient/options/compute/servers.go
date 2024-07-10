@@ -25,6 +25,7 @@ import (
 	"yunion.io/x/pkg/util/fileutils"
 	"yunion.io/x/pkg/util/regutils"
 
+	"yunion.io/x/onecloud/pkg/apis"
 	computeapi "yunion.io/x/onecloud/pkg/apis/compute"
 	schedapi "yunion.io/x/onecloud/pkg/apis/scheduler"
 	"yunion.io/x/onecloud/pkg/cloudcommon/cmdline"
@@ -1537,4 +1538,13 @@ type ServerSetOSInfoOptions struct {
 
 func (o *ServerSetOSInfoOptions) Params() (jsonutils.JSONObject, error) {
 	return jsonutils.Marshal(o), nil
+}
+
+type ServerPostpaidExpireOptions struct {
+	ServerIdOptions
+	apis.PostpaidExpireInput
+}
+
+func (opts *ServerPostpaidExpireOptions) Params() (jsonutils.JSONObject, error) {
+	return jsonutils.Marshal(opts.PostpaidExpireInput), nil
 }

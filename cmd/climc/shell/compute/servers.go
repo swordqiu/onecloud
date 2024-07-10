@@ -127,6 +127,8 @@ func init() {
 	cmd.BatchPerform("start-rescue", &options.ServerStartOptions{})
 	cmd.BatchPerform("stop-rescue", &options.ServerStartOptions{})
 	cmd.BatchPerform("sync-os-info", &options.ServerIdsOptions{})
+	cmd.Perform("cancel-expire", &options.ServerIdOptions{})
+	cmd.Perform("postpaid-expire", &options.ServerPostpaidExpireOptions{})
 
 	cmd.Get("vnc", new(options.ServerVncOptions))
 	cmd.Get("desc", new(options.ServerIdOptions))
