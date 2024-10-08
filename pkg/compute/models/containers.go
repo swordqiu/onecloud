@@ -74,9 +74,9 @@ type SContainer struct {
 	Spec *api.ContainerSpec `length:"long" create:"required" list:"user" update:"user"`
 
 	// 启动时间
-	StartedAt time.Time `nullable:"false" created_at:"false" index:"true" get:"user" list:"user" json:"started_at"`
+	StartedAt time.Time `nullable:"true" get:"user" list:"user" json:"started_at"`
 	// 上次退出时间
-	LastFinishedAt time.Time `nullable:"true" created_at:"false" index:"true" get:"user" list:"user" json:"last_finished_at"`
+	LastFinishedAt time.Time `nullable:"true" get:"user" list:"user" json:"last_finished_at"`
 
 	// 重启次数
 	RestartCount int `nullable:"true" list:"user"`
