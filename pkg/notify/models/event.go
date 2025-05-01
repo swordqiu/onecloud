@@ -23,6 +23,7 @@ import (
 
 	"yunion.io/x/onecloud/pkg/cloudcommon/consts"
 	"yunion.io/x/onecloud/pkg/cloudcommon/db"
+	"yunion.io/x/onecloud/pkg/notify/options"
 )
 
 type SEventManager struct {
@@ -33,7 +34,16 @@ var EventManager *SEventManager
 
 func InitEventLog() {
 	EventManager = &SEventManager{
-		SLogBaseManager: db.NewLogBaseManager(SEvent{}, "events2_tbl", "notifyevent", "notifyevents", "created_at", consts.OpsLogWithClickhouse),
+		SLogBaseManager: db.NewLogBaseManagerWithDuration(
+			SEvent{},
+			"events2_tbl",
+			"notifyevent",
+			"notifyevents",
+			"created_at",
+			consts.OpsLogWithClickhouse,
+			time.Duration(options.Options.EventLogSplitDays)*24*time.Hour,
+			options.Options.EventLogKeepMonths,
+		),
 	}
 	EventManager.SetVirtualObject(EventManager)
 }

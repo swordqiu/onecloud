@@ -43,6 +43,10 @@ type SLogBase struct {
 }
 
 func NewLogBaseManager(model interface{}, table string, keyword, keywordPlural string, timeCol string, useClickHouse bool) SLogBaseManager {
+	return NewLogBaseManagerWithDuration(model, table, keyword, keywordPlural, timeCol, useClickHouse, consts.SplitableMaxDuration(), consts.SplitableMaxKeepMonths())
+}
+
+func NewLogBaseManagerWithDuration(model interface{}, table string, keyword, keywordPlural string, timeCol string, useClickHouse bool, splitDuration time.Duration, keepMonths int) SLogBaseManager {
 	if useClickHouse {
 		man := SLogBaseManager{NewModelBaseManagerWithDBName(
 			model,
@@ -53,7 +57,7 @@ func NewLogBaseManager(model interface{}, table string, keyword, keywordPlural s
 		)}
 		col := man.TableSpec().ColumnSpec("timeCol")
 		if clickCol, ok := col.(clickhouse.IClickhouseColumnSpec); ok {
-			clickCol.SetTTL(consts.SplitableMaxKeepMonths(), "MONTH")
+			clickCol.SetTTL(keepMonths, "MONTH")
 		}
 		return man
 	} else {
@@ -64,8 +68,8 @@ func NewLogBaseManager(model interface{}, table string, keyword, keywordPlural s
 			keywordPlural,
 			"id",
 			timeCol,
-			consts.SplitableMaxDuration(),
-			consts.SplitableMaxKeepMonths(),
+			splitDuration,
+			keepMonths,
 		)}
 	}
 }

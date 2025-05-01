@@ -37,6 +37,9 @@ type NotifyOption struct {
 
 	SyncReceiverIntervalMinutes int  `help:"interval to sync receivers from keystone, in minutes" default:"30"`
 	EnableWatchUser             bool `help:"use etcd to watch user" default:"false"`
+
+	EventLogSplitDays  int `help:"split event log by days" default:"30"`
+	EventLogKeepMonths int `help:"keep event log months" default:"6"`
 }
 
 var Options NotifyOption
