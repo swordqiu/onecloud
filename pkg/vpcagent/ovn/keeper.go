@@ -113,6 +113,8 @@ func (keeper *OVNNorthboundKeeper) ClaimVpc(ctx context.Context, vpc *agentmodel
 		vpcR2extp       *ovn_nb.LogicalRouterPort
 		vpcExtr2p       *ovn_nb.LogicalSwitchPort
 		vpcDefaultRoute *ovn_nb.LogicalRouterStaticRoute
+
+		vpcDefaultRoute6 *ovn_nb.LogicalRouterStaticRoute
 	)
 	if hasDistgw || hasEipgw {
 		vpcExtLr = &ovn_nb.LogicalRouter{
@@ -159,6 +161,12 @@ func (keeper *OVNNorthboundKeeper) ClaimVpc(ctx context.Context, vpc *agentmodel
 			Nexthop:    apis.VpcInterExtIP2().String(),
 			OutputPort: ptr(vpcR1extpName(vpc.Id)),
 		}
+		vpcDefaultRoute6 = &ovn_nb.LogicalRouterStaticRoute{
+			Policy:     ptr("dst-ip"),
+			IpPrefix:   "::/0",
+			Nexthop:    apis.VpcInterExtIP26().String(),
+			OutputPort: ptr(vpcR1extpName(vpc.Id)),
+		}
 		irows = append(irows,
 			vpcExtLr,
 			vpcExtLs,
@@ -167,6 +175,7 @@ func (keeper *OVNNorthboundKeeper) ClaimVpc(ctx context.Context, vpc *agentmodel
 			vpcR2extp,
 			vpcExtr2p,
 			vpcDefaultRoute,
+			vpcDefaultRoute6,
 		)
 	}
 
@@ -249,7 +258,9 @@ func (keeper *OVNNorthboundKeeper) ClaimVpc(ctx context.Context, vpc *agentmodel
 		args = append(args, ovnCreateArgs(vpcR2extp, vpcR2extp.Name)...)
 		args = append(args, ovnCreateArgs(vpcExtr2p, vpcExtr2p.Name)...)
 		args = append(args, ovnCreateArgs(vpcDefaultRoute, "vpcDefaultRoute")...)
+		args = append(args, ovnCreateArgs(vpcDefaultRoute6, "vpcDefaultRoute6")...)
 		args = append(args, "--", "add", "Logical_Router", vpcLrName(vpc.Id), "static_routes", "@vpcDefaultRoute")
+		args = append(args, "--", "add", "Logical_Router", vpcLrName(vpc.Id), "static_routes", "@vpcDefaultRoute6")
 		args = append(args, "--", "add", "Logical_Switch", vpcExtLs.Name, "ports", "@"+vpcExtr1p.Name)
 		args = append(args, "--", "add", "Logical_Router", vpcLr.Name, "ports", "@"+vpcR1extp.Name)
 		args = append(args, "--", "add", "Logical_Switch", vpcExtLs.Name, "ports", "@"+vpcExtr2p.Name)
@@ -282,8 +293,10 @@ func (keeper *OVNNorthboundKeeper) ClaimNetwork(ctx context.Context, network *ag
 	netLs := &ovn_nb.LogicalSwitch{
 		Name: netLsName(network.Id),
 	}
-	networks := []string{
-		fmt.Sprintf("%s/%d", network.GuestGateway, network.GuestIpMask),
+
+	networks := []string{}
+	if len(network.GuestGateway) > 0 && network.GuestIpMask > 0 {
+		networks = append(networks, fmt.Sprintf("%s/%d", network.GuestGateway, network.GuestIpMask))
 	}
 	if len(network.GuestGateway6) > 0 && network.GuestIp6Mask > 0 {
 		networks = append(networks, fmt.Sprintf("%s/%d", network.GuestGateway6, network.GuestIp6Mask))
@@ -291,6 +304,7 @@ func (keeper *OVNNorthboundKeeper) ClaimNetwork(ctx context.Context, network *ag
 			networks = append(networks, fmt.Sprintf("%s/128", ip6))
 		}
 	}
+
 	netRnp := &ovn_nb.LogicalRouterPort{
 		Name:     netRnpName(network.Id),
 		Mac:      rpMac,
@@ -332,7 +346,7 @@ func (keeper *OVNNorthboundKeeper) ClaimNetwork(ctx context.Context, network *ag
 			return errors.Wrap(err, "NewIPV4Addr GuestGateway")
 		} else {
 			netAddr := ipAddr.NetAddr(network.GuestIpMask)
-			netAddrCidr := fmt.Sprintf("%s/%d", netAddr, network.GuestIpMask)
+			netAddrCidr := fmt.Sprintf("%s/%d", netAddr.String(), network.GuestIpMask)
 			ocStaticRouteRef := fmt.Sprintf("static-default-routes-%s", network.Id)
 			vpcExtBackRoute = &ovn_nb.LogicalRouterStaticRoute{
 				Policy:     ptr("dst-ip"),
@@ -351,7 +365,7 @@ func (keeper *OVNNorthboundKeeper) ClaimNetwork(ctx context.Context, network *ag
 			return errors.Wrap(err, "NewIPV6Addr GuestGateway6")
 		} else {
 			netAddr6 := ip6Addr.NetAddr(network.GuestIp6Mask)
-			netAddrCidr6 := fmt.Sprintf("%s/%d", netAddr6, network.GuestIp6Mask)
+			netAddrCidr6 := fmt.Sprintf("%s/%d", netAddr6.String(), network.GuestIp6Mask)
 			ocStaticRoute6Ref := fmt.Sprintf("static-default-routes6-%s", network.Id)
 			vpcExtBackRoute6 = &ovn_nb.LogicalRouterStaticRoute{
 				Policy:     ptr("dst-ip"),
@@ -691,13 +705,17 @@ func (keeper *OVNNorthboundKeeper) ClaimGuestnetwork(ctx context.Context, guestn
 	}
 
 	var (
-		dhcpOpt     = generateDhcpOptions(ctx, guestnetwork, opts)
-		dhcpOptName = fmt.Sprintf("dhcp-opt-%s-%s", guestnetwork.GuestId, guestnetwork.Ifname)
+		dhcpOpt     *ovn_nb.DHCPOptions
+		dhcpOptName string
 
 		dhcp6Opt     *ovn_nb.DHCPOptions
 		dhcp6OptName string
 	)
 
+	if len(guestnetwork.IpAddr) > 0 {
+		dhcpOpt = generateDhcpOptions(ctx, guestnetwork, opts)
+		dhcpOptName = fmt.Sprintf("dhcp-opt-%s-%s", guestnetwork.GuestId, guestnetwork.Ifname)
+	}
 	if len(guestnetwork.Ip6Addr) > 0 {
 		dhcp6Opt = generateDhcp6Options(ctx, guestnetwork, opts)
 		dhcp6OptName = fmt.Sprintf("dhcp6-opt-%s-%s", guestnetwork.GuestId, guestnetwork.Ifname)
@@ -747,45 +765,47 @@ func (keeper *OVNNorthboundKeeper) ClaimGuestnetwork(ctx context.Context, guestn
 	{
 		gnrDefaultPolicy := "src-ip"
 		if eip != nil && vpcHasEipgw(vpc) {
-			gnrDefault = &ovn_nb.LogicalRouterStaticRoute{
-				Policy:     &gnrDefaultPolicy,
-				IpPrefix:   guestnetwork.IpAddr + "/32",
-				Nexthop:    apis.VpcEipGatewayIP3().String(),
-				OutputPort: ptr(vpcRepName(vpc.Id)),
-				ExternalIds: map[string]string{
-					externalKeyOcRef: ocGnrDefaultRef,
-				},
-			}
-			if bwMbps := eip.Bandwidth; bwMbps > 0 {
-				var (
-					kbps     = int64(bwMbps * 1000)
-					kbur     = int64(kbps * 2)
-					eipgwVip = apis.VpcEipGatewayIP3().String()
-				)
-				hasQoSEip = true
-				qosEipIn = &ovn_nb.QoS{
-					Priority:  2000,
-					Direction: "from-lport",
-					Match:     fmt.Sprintf("inport == %q && ip4 && ip4.dst == %s", vpcEipLspName(vpc.Id, eipgwVip), guestnetwork.IpAddr),
-					Bandwidth: map[string]int64{
-						"rate":  kbps,
-						"burst": kbur,
-					},
+			if len(guestnetwork.IpAddr) > 0 {
+				gnrDefault = &ovn_nb.LogicalRouterStaticRoute{
+					Policy:     &gnrDefaultPolicy,
+					IpPrefix:   guestnetwork.IpAddr + "/32",
+					Nexthop:    apis.VpcEipGatewayIP3().String(),
+					OutputPort: ptr(vpcRepName(vpc.Id)),
 					ExternalIds: map[string]string{
-						externalKeyOcRef: ocQosEipRef,
+						externalKeyOcRef: ocGnrDefaultRef,
 					},
 				}
-				qosEipOut = &ovn_nb.QoS{
-					Priority:  3000,
-					Direction: "from-lport",
-					Match:     fmt.Sprintf("inport == %q && ip4 && ip4.src == %s", vpcErpName(vpc.Id), guestnetwork.IpAddr),
-					Bandwidth: map[string]int64{
-						"rate":  kbps,
-						"burst": kbur,
-					},
-					ExternalIds: map[string]string{
-						externalKeyOcRef: ocQosEipRef,
-					},
+				if bwMbps := eip.Bandwidth; bwMbps > 0 {
+					var (
+						kbps     = int64(bwMbps * 1000)
+						kbur     = int64(kbps * 2)
+						eipgwVip = apis.VpcEipGatewayIP3().String()
+					)
+					hasQoSEip = true
+					qosEipIn = &ovn_nb.QoS{
+						Priority:  2000,
+						Direction: "from-lport",
+						Match:     fmt.Sprintf("inport == %q && ip4 && ip4.dst == %s", vpcEipLspName(vpc.Id, eipgwVip), guestnetwork.IpAddr),
+						Bandwidth: map[string]int64{
+							"rate":  kbps,
+							"burst": kbur,
+						},
+						ExternalIds: map[string]string{
+							externalKeyOcRef: ocQosEipRef,
+						},
+					}
+					qosEipOut = &ovn_nb.QoS{
+						Priority:  3000,
+						Direction: "from-lport",
+						Match:     fmt.Sprintf("inport == %q && ip4 && ip4.src == %s", vpcErpName(vpc.Id), guestnetwork.IpAddr),
+						Bandwidth: map[string]int64{
+							"rate":  kbps,
+							"burst": kbur,
+						},
+						ExternalIds: map[string]string{
+							externalKeyOcRef: ocQosEipRef,
+						},
+					}
 				}
 			}
 
@@ -804,7 +824,7 @@ func (keeper *OVNNorthboundKeeper) ClaimGuestnetwork(ctx context.Context, guestn
 			if len(guestnetwork.Ip6Addr) > 0 {
 				gnrDefault6 = &ovn_nb.LogicalRouterStaticRoute{
 					Policy:     &gnrDefaultPolicy,
-					IpPrefix:   guestnetwork.Ip6Addr + "/32",
+					IpPrefix:   guestnetwork.Ip6Addr + "/128",
 					Nexthop:    host.OvnMappedIp6Addr,
 					OutputPort: ptr(vpcRhpName(vpc.Id)),
 					ExternalIds: map[string]string{
@@ -866,8 +886,10 @@ func (keeper *OVNNorthboundKeeper) ClaimGuestnetwork(ctx context.Context, guestn
 	}
 
 	args = append(args, ovnCreateArgs(gnp, gnp.Name)...)
-	args = append(args, ovnCreateArgs(dhcpOpt, dhcpOptName)...)
-	args = append(args, "--", "add", "Logical_Switch_Port", gnp.Name, "dhcpv4_options", "@"+dhcpOptName)
+	if len(guestnetwork.IpAddr) > 0 {
+		args = append(args, ovnCreateArgs(dhcpOpt, dhcpOptName)...)
+		args = append(args, "--", "add", "Logical_Switch_Port", gnp.Name, "dhcpv4_options", "@"+dhcpOptName)
+	}
 	if len(guestnetwork.Ip6Addr) > 0 {
 		args = append(args, ovnCreateArgs(dhcp6Opt, dhcp6OptName)...)
 		args = append(args, "--", "add", "Logical_Switch_Port", gnp.Name, "dhcpv6_options", "@"+dhcp6OptName)
@@ -1247,7 +1269,7 @@ func (keeper *OVNNorthboundKeeper) ClaimGroupnetwork(ctx context.Context, groupn
 		acl = &ovn_nb.ACL{
 			Priority:  1,
 			Direction: aclDirToLport,
-			Match:     fmt.Sprintf(`is_chassis_resident("%s") && ip4`, gnp.Name),
+			Match:     fmt.Sprintf(`is_chassis_resident("%s")`, gnp.Name),
 			Action:    "allow-related",
 			ExternalIds: map[string]string{
 				externalKeyOcRef: ocAclRef,
