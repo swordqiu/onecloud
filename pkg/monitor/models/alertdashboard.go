@@ -115,16 +115,6 @@ func (man *SAlertDashBoardManager) ValidateCreateData(
 	return data, nil
 }
 
-func (dash *SAlertDashBoard) CustomizeCreate(
-	ctx context.Context, userCred mcclient.TokenCredential,
-	ownerId mcclient.IIdentityProvider,
-	query jsonutils.JSONObject,
-	data jsonutils.JSONObject,
-) error {
-	//return dash.SScopedResourceBase.CustomizeCreate(ctx, userCred, ownerId, query, data)
-	return nil
-}
-
 func (dash *SAlertDashBoard) PostCreate(ctx context.Context,
 	userCred mcclient.TokenCredential, ownerId mcclient.IIdentityProvider,
 	query jsonutils.JSONObject, data jsonutils.JSONObject) {

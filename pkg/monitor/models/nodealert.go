@@ -379,7 +379,7 @@ func (man *SNodeAlertManager) CustomizeFilterList(
 	return filters, nil
 }
 
-func (alert *SV1Alert) CustomizeCreate(
+func (alert *SV1Alert) customizeCreate(
 	ctx context.Context, userCred mcclient.TokenCredential,
 	notiName, channel, recipients, usedBy string) error {
 	noti, err := MeterAlertManager.CreateNotification(ctx, userCred, notiName, channel, recipients)

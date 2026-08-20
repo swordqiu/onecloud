@@ -463,7 +463,7 @@ func (alert *SMeterAlert) CustomizeCreate(ctx context.Context, userCred mcclient
 	if err := data.Unmarshal(input); err != nil {
 		return err
 	}
-	return alert.SV1Alert.CustomizeCreate(ctx, userCred, input.Type, input.Channel, input.Recipients, AlertNotificationUsedByMeterAlert)
+	return alert.SV1Alert.customizeCreate(ctx, userCred, input.Type, input.Channel, input.Recipients, AlertNotificationUsedByMeterAlert)
 }
 
 func (alert *SMeterAlert) setType(ctx context.Context, userCred mcclient.TokenCredential, t string) error {

@@ -389,11 +389,6 @@ func (man *SMonitorResourceManager) ValidateCreateData(
 	return data, nil
 }
 
-func (self *SMonitorResource) CustomizeCreate(ctx context.Context, userCred mcclient.TokenCredential,
-	ownerId mcclient.IIdentityProvider, query jsonutils.JSONObject, data jsonutils.JSONObject) error {
-	return nil
-}
-
 func (man *SMonitorResourceManager) FetchCustomizeColumns(
 	ctx context.Context,
 	userCred mcclient.TokenCredential,

@@ -159,7 +159,10 @@ func (nm *SNotificationManager) ValidateCreateData(ctx context.Context, userCred
 
 func (n *SNotification) CustomizeCreate(ctx context.Context, userCred mcclient.TokenCredential, ownerId mcclient.IIdentityProvider, query jsonutils.JSONObject, data jsonutils.JSONObject) error {
 	n.ReceivedAt = time.Now()
-	n.Id = db.DefaultUUIDGenerator()
+	return n.SStatusStandaloneResourceBase.CustomizeCreate(ctx, userCred, ownerId, query, data)
+}
+
+func (n *SNotification) postCreateRCR(ctx context.Context, userCred mcclient.TokenCredential, data jsonutils.JSONObject) error {
 	var input api.NotificationCreateInput
 	err := data.Unmarshal(&input)
 	if err != nil {
@@ -188,7 +191,13 @@ func (n *SNotification) CustomizeCreate(ctx context.Context, userCred mcclient.T
 
 func (n *SNotification) PostCreate(ctx context.Context, userCred mcclient.TokenCredential, ownerId mcclient.IIdentityProvider, query jsonutils.JSONObject, data jsonutils.JSONObject) {
 	n.SStatusStandaloneResourceBase.PostCreate(ctx, userCred, ownerId, query, data)
-	n.SetStatus(ctx, userCred, api.NOTIFICATION_STATUS_RECEIVED, "")
+	err := n.postCreateRCR(ctx, userCred, data)
+	if err != nil {
+		n.SetStatus(ctx, userCred, api.NOTIFICATION_STATUS_FAILED, err.Error())
+		return
+	} else {
+		n.SetStatus(ctx, userCred, api.NOTIFICATION_STATUS_RECEIVED, "")
+	}
 	task, err := taskman.TaskManager.NewTask(ctx, "NotificationSendTask", n, userCred, nil, "", "")
 	if err != nil {
 		n.SetStatus(ctx, userCred, api.NOTIFICATION_STATUS_FAILED, "NewTask")
