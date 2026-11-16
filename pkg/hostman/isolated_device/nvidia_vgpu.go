@@ -98,6 +98,13 @@ func (dev *sNVIDIAVgpuDevice) GetModelName() string {
 	return modelName + "-" + dev.model
 }
 
+func (dev *sNVIDIAVgpuDevice) setGPUModelName(name string) {
+	if dev.pfDev == nil || name == "" {
+		return
+	}
+	dev.pfDev.ModelName = name
+}
+
 func (dev *sNVIDIAVgpuDevice) CustomProbe(idx int) error {
 	return nil
 }
@@ -132,6 +139,10 @@ func (dev *sNVIDIAVgpuDevice) GetNvidiaMpsThreadPercentage() int {
 
 func (dev *sNVIDIAVgpuDevice) GetMemorySize() int {
 	return 0
+}
+
+func (dev *sNVIDIAVgpuDevice) GetChipsOnDevice() uint {
+	return 1
 }
 
 func (dev *sNVIDIAVgpuDevice) GetCardPath() string {

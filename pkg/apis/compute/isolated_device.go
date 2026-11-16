@@ -45,6 +45,18 @@ type IsolateDeviceDetails struct {
 	GuestIds []string `json:"guest_ids"`
 	// 云主机状态
 	GuestStatus []string `json:"guest_status"`
+
+	ManageTool               string  `json:"manage_tool"`
+	VectorPeakPrecision      string  `json:"vector_peak_precision"`
+	GPUArch                  string  `json:"gpu_arch"`
+	MatrixPeakPrecision      string  `json:"matrix_peak_precision"`
+	GPUChip                  string  `json:"gpu_chip"`
+	MemoryType               string  `json:"memory_type"`
+	MemoryBusBit             int     `json:"memory_bus_bit,omitzero"`
+	BandwidthGBs             float64 `json:"bandwidth_gb_s,omitzero"`
+	FormFactor               string  `json:"form_factor"`
+	Interconnect             string  `json:"interconnect"`
+	InterconnectBandwidthGBs float64 `json:"interconnect_bandwidth_gb_s"`
 }
 
 type IsolatedDeviceListInput struct {
