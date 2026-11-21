@@ -792,6 +792,22 @@ func init() {
 		return nil
 	})
 
+	type ServerHTML5ConsoleOptions struct {
+		ID string `help:"ID or name of server"`
+	}
+	R(&ServerHTML5ConsoleOptions{}, "server-html5-console", "Get baremetal server HTML5 console access url", func(s *mcclient.ClientSession, args *ServerHTML5ConsoleOptions) error {
+		spec, err := modules.Servers.GetSpecific(s, args.ID, "html5-console", nil)
+		if err != nil {
+			return err
+		}
+		consoleURL, err := spec.GetString("url")
+		if err != nil {
+			return err
+		}
+		fmt.Println(consoleURL)
+		return nil
+	})
+
 	R(&options.ServerSSHLoginOptions{}, "server-ssh", "Use SSH login a server", func(s *mcclient.ClientSession, opts *options.ServerSSHLoginOptions) error {
 		srv, err := modules.Servers.Get(s, opts.ID, nil)
 		if err != nil {

@@ -81,6 +81,7 @@ func initBaremetalsHandler(app *appsrv.Application) {
 	AddHandler(app, "POST", bmActionPrefix("ipmi-probe"), bmObjMiddleware(handleBaremetalIpmiProbe))
 	AddHandler(app, "POST", bmActionPrefix("cdrom"), bmObjMiddleware(handleBaremetalCdromTask))
 	AddHandler(app, "POST", bmActionPrefix("jnlp"), bmObjMiddleware(handleBaremetalJnlpTask))
+	AddHandler(app, "POST", bmActionPrefix("html5-console"), bmObjMiddleware(handleBaremetalHTML5Console))
 	AddHandler(app, "POST", bmActionPrefix("probe-isolated-devices"), bmObjMiddleware(handleBaremetalDetectIsolatedDevices))
 	AddHandler(app, "POST", "/baremetals/validate-ipmi", handleBaremetalValidateIPMI())
 
@@ -184,6 +185,17 @@ func handleBaremetalJnlpTask(ctx *Context, bm *baremetal.SBaremetalInstance) {
 	}
 	result := jsonutils.NewDict()
 	result.Add(jsonutils.NewString(jnlp), "jnlp")
+	ctx.ResponseJson(result)
+}
+
+func handleBaremetalHTML5Console(ctx *Context, bm *baremetal.SBaremetalInstance) {
+	consoleURL, err := bm.GetHTML5Console(ctx)
+	if err != nil {
+		ctx.ResponseError(errors.Wrap(err, "GetHTML5Console"))
+		return
+	}
+	result := jsonutils.NewDict()
+	result.Add(jsonutils.NewString(consoleURL), "url")
 	ctx.ResponseJson(result)
 }
 

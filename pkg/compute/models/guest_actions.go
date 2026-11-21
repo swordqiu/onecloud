@@ -6483,6 +6483,20 @@ func (self *SGuest) GetDetailsJnlp(ctx context.Context, userCred mcclient.TokenC
 	return host.GetDetailsJnlp(ctx, userCred, query)
 }
 
+func (self *SGuest) GetDetailsHtml5Console(ctx context.Context, userCred mcclient.TokenCredential, query jsonutils.JSONObject) (jsonutils.JSONObject, error) {
+	if self.Hypervisor != api.HYPERVISOR_BAREMETAL {
+		return nil, httperrors.NewInvalidStatusError("not a baremetal server")
+	}
+	host, _ := self.GetHost()
+	if host == nil {
+		return nil, httperrors.NewInvalidStatusError("no valid host")
+	}
+	if !host.IsBaremetal {
+		return nil, httperrors.NewInvalidStatusError("host is not a baremetal")
+	}
+	return host.GetDetailsHtml5Console(ctx, userCred, query)
+}
+
 func (guest *SGuest) StartDeleteGuestSnapshots(ctx context.Context, userCred mcclient.TokenCredential, parentTaskId string, deletePendingSnapshots bool) error {
 	data := jsonutils.NewDict()
 	if deletePendingSnapshots {

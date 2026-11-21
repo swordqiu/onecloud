@@ -35,6 +35,7 @@ const (
 	OEM_NAME_DELL       = "dell"
 	OEM_NAME_HPE        = "hpe"
 	OEM_NAME_HP         = "hp"
+	OEM_NAME_XFUSION    = "xfusion"
 	OEM_NAME_HUAWEI     = "huawei"
 	OEM_NAME_INSPUR     = "inspur"
 	OEM_NAME_LENOVO     = "lenovo"
@@ -42,6 +43,8 @@ const (
 	OEM_NAME_QEMU       = "qemu"
 	OEM_NAME_SUPERMICRO = "supermicro"
 	OEM_NAME_H3C        = "h3c"
+	OEM_NAME_SUGON      = "sugon"
+	OEM_NAME_ZTE        = "zte"
 )
 
 var (
@@ -49,6 +52,7 @@ var (
 		OEM_NAME_DELL,
 		OEM_NAME_HPE,
 		OEM_NAME_HP,
+		OEM_NAME_XFUSION,
 		OEM_NAME_HUAWEI,
 		OEM_NAME_INSPUR,
 		OEM_NAME_LENOVO,
@@ -56,6 +60,8 @@ var (
 		OEM_NAME_QEMU,
 		OEM_NAME_SUPERMICRO,
 		OEM_NAME_H3C,
+		OEM_NAME_SUGON,
+		OEM_NAME_ZTE,
 	}
 )
 

@@ -553,6 +553,22 @@ func init() {
 		return nil
 	})
 
+	type HostHTML5ConsoleOptions struct {
+		ID string `help:"ID or name of host"`
+	}
+	R(&HostHTML5ConsoleOptions{}, "host-html5-console", "Get baremetal HTML5 console access url", func(s *mcclient.ClientSession, args *HostHTML5ConsoleOptions) error {
+		spec, err := modules.Hosts.GetSpecific(s, args.ID, "html5-console", nil)
+		if err != nil {
+			return err
+		}
+		consoleURL, err := spec.GetString("url")
+		if err != nil {
+			return err
+		}
+		fmt.Println(consoleURL)
+		return nil
+	})
+
 	type HostInsertIsoOptions struct {
 		ID    string `help:"ID or name of host" json:"-"`
 		Image string `help:"ID or name or ISO image name" json:"image"`

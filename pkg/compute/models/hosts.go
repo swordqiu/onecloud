@@ -8087,6 +8087,16 @@ func (hh *SHost) GetDetailsJnlp(ctx context.Context, userCred mcclient.TokenCred
 	return resp, nil
 }
 
+func (hh *SHost) GetDetailsHtml5Console(ctx context.Context, userCred mcclient.TokenCredential, query jsonutils.JSONObject) (jsonutils.JSONObject, error) {
+	url := fmt.Sprintf("/baremetals/%s/html5-console", hh.Id)
+	header := mcclient.GetTokenHeaders(userCred)
+	resp, err := hh.BaremetalSyncRequest(ctx, "POST", url, header, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "BaremetalSyncRequest")
+	}
+	return resp, nil
+}
+
 func (hh *SHost) PerformInsertIso(ctx context.Context, userCred mcclient.TokenCredential, query jsonutils.JSONObject, data jsonutils.JSONObject) (jsonutils.JSONObject, error) {
 	if utils.IsInStringArray(hh.Status, []string{api.BAREMETAL_READY, api.BAREMETAL_RUNNING}) {
 		imageStr, _ := data.GetString("image")

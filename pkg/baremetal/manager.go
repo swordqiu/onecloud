@@ -46,6 +46,7 @@ import (
 	api "yunion.io/x/onecloud/pkg/apis/compute"
 	baremetalapi "yunion.io/x/onecloud/pkg/apis/compute/baremetal"
 	apiidenty "yunion.io/x/onecloud/pkg/apis/identity"
+	"yunion.io/x/onecloud/pkg/baremetal/console"
 	o "yunion.io/x/onecloud/pkg/baremetal/options"
 	"yunion.io/x/onecloud/pkg/baremetal/profiles"
 	"yunion.io/x/onecloud/pkg/baremetal/pxe"
@@ -74,7 +75,6 @@ import (
 	"yunion.io/x/onecloud/pkg/util/influxdb"
 	"yunion.io/x/onecloud/pkg/util/procutils"
 	"yunion.io/x/onecloud/pkg/util/redfish"
-	"yunion.io/x/onecloud/pkg/util/redfish/bmconsole"
 	"yunion.io/x/onecloud/pkg/util/ssh"
 	"yunion.io/x/onecloud/pkg/util/sysutils"
 	"yunion.io/x/onecloud/pkg/util/timeutils2"
@@ -2569,24 +2569,51 @@ func (b *SBaremetalInstance) fetchPowerThermalMetrics(ctx context.Context) ([]in
 }
 
 func (b *SBaremetalInstance) GetConsoleJNLP(ctx context.Context) (string, error) {
-	cli := b.GetRedfishCli(ctx)
-	if cli != nil {
-		return cli.GetConsoleJNLP(ctx)
+	manufacture := b.GetManufacture()
+	if cli := b.GetRedfishCli(ctx); cli != nil {
+		jnlp, err := cli.GetConsoleJNLP(ctx)
+		if err == nil && strings.Contains(strings.ToLower(jnlp), "<jnlp") {
+			return jnlp, nil
+		}
+		host := ""
+		if conf := b.GetIPMIConfig(); conf != nil {
+			host = conf.IpAddr
+		}
+		log.Warningf("console-jnlp redfish host=%s manufacture=%q err=%v, fallback to manufacture driver", host, manufacture, err)
 	}
 	conf := b.GetIPMIConfig()
-	bmc := bmconsole.NewBMCConsole(conf.IpAddr, conf.Username, conf.Password, false)
-	manufacture := b.GetManufacture()
-	switch strings.ToLower(manufacture) {
-	case "hp", "hpe":
-		return bmc.GetIloConsoleJNLP(ctx)
-	case "dell", "dell inc.":
-		return bmc.GetIdracConsoleJNLP(ctx, b.GetSerialNumber(), b.GetModel())
-	case "supermicro":
-		return bmc.GetSupermicroConsoleJNLP(ctx)
-	case "lenovo":
-		return bmc.GetLenovoConsoleJNLP(ctx)
+	if conf == nil {
+		return "", errors.Wrap(httperrors.ErrNotSupported, "no valid ipmi config")
 	}
-	return "", httperrors.NewNotImplementedError("Unsupported manufacture %s", manufacture)
+	drv := console.GetDriver(manufacture)
+	if drv == nil {
+		return "", httperrors.NewNotImplementedError("Unsupported manufacture %s", manufacture)
+	}
+	return drv.GetConsoleJNLP(ctx, consoleInput(conf, b))
+}
+
+func (b *SBaremetalInstance) GetHTML5Console(ctx context.Context) (string, error) {
+	manufacture := b.GetManufacture()
+	conf := b.GetIPMIConfig()
+	if conf == nil {
+		return "", errors.Wrap(httperrors.ErrNotSupported, "no valid ipmi config")
+	}
+	drv := console.GetDriver(manufacture)
+	html5, ok := drv.(console.IConsoleHTML5Driver)
+	if !ok {
+		return "", httperrors.NewNotImplementedError("Unsupported manufacture %s", manufacture)
+	}
+	return html5.GetHTML5Console(ctx, consoleInput(conf, b))
+}
+
+func consoleInput(conf *api.SIpmiInfo, b *SBaremetalInstance) *console.ConsoleJNLPInput {
+	return &console.ConsoleJNLPInput{
+		Host:         conf.IpAddr,
+		Username:     conf.Username,
+		Password:     conf.Password,
+		SerialNumber: b.GetSerialNumber(),
+		Model:        b.GetModel(),
+	}
 }
 
 func (b *SBaremetalInstance) getTags() []influxdb.SKeyValue {
