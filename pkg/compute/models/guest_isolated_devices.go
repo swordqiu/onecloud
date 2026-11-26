@@ -305,6 +305,9 @@ func (self *SIsolatedDevice) GetAllGuestIsolatedDevices() ([]SGuestIsolatedDevic
 
 func (self *SGuestIsolatedDevice) getDesc() *api.IsolatedDeviceJsonDesc {
 	dev := self.GetIsolatedDevice()
+	if dev == nil {
+		return nil
+	}
 	devDesc := dev.getDesc()
 	devDesc.DiskIndex = self.DiskIndex
 	devDesc.NetworkIndex = self.NetworkIndex
@@ -317,7 +320,9 @@ func (self *SGuestIsolatedDevice) getDesc() *api.IsolatedDeviceJsonDesc {
 func (self *SGuestIsolatedDevice) GetShortDesc(ctx context.Context) *jsonutils.JSONDict {
 	devDesc := self.getDesc()
 	desc := jsonutils.NewDict()
-	desc.Update(jsonutils.Marshal(devDesc))
+	if devDesc != nil {
+		desc.Update(jsonutils.Marshal(devDesc))
+	}
 	desc.Add(jsonutils.NewString(GuestIsolatedDeviceManager.Keyword()), "res_name")
 	return desc
 }

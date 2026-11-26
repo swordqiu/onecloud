@@ -5963,7 +5963,9 @@ func (self *SGuest) GetJsonDescAtHypervisor(ctx context.Context, host *SHost) *a
 
 	isolatedDevs, _ := self.GetGuestIsolatedDevices()
 	for _, dev := range isolatedDevs {
-		desc.IsolatedDevices = append(desc.IsolatedDevices, dev.getDesc())
+		if devDesc := dev.getDesc(); devDesc != nil {
+			desc.IsolatedDevices = append(desc.IsolatedDevices, devDesc)
+		}
 	}
 
 	if self.IsSchedulerNumaAllocate() {
@@ -6225,8 +6227,14 @@ func (self *SGuest) GetSpec(checkStatus bool) *jsonutils.JSONDict {
 	gpuSpecs := []GpuSpec{}
 	for i := range guestgpus {
 		guestgpu := guestgpus[i].GetIsolatedDevice()
+		if guestgpu == nil {
+			continue
+		}
 		if guestgpu.DevType == api.GPU_TYPE {
 			gs := guestgpu.GetGpuSpec()
+			if gs == nil {
+				continue
+			}
 			gpuSpecs = append(gpuSpecs, *gs)
 		}
 	}
@@ -7379,15 +7387,18 @@ func (self *SGuest) ToIsolatedDevicesConfig() []*api.IsolatedDeviceConfig {
 	if len(guestIsolatedDevices) == 0 {
 		return nil
 	}
-	ret := make([]*api.IsolatedDeviceConfig, len(guestIsolatedDevices))
+	ret := make([]*api.IsolatedDeviceConfig, 0, len(guestIsolatedDevices))
 	for idx := range guestIsolatedDevices {
 		dev := guestIsolatedDevices[idx].GetIsolatedDevice()
+		if dev == nil {
+			continue
+		}
 		devConf := new(api.IsolatedDeviceConfig)
 		devConf.Model = dev.Model
 		devConf.Vendor = dev.getVendor()
 		devConf.DevType = dev.DevType
 		devConf.SharingMode = dev.SharingMode
-		ret[idx] = devConf
+		ret = append(ret, devConf)
 	}
 	return ret
 }
